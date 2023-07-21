@@ -189,3 +189,42 @@ bool fips_algorithms_are_disabled(gchar *const*algorithms)
 {
     return _fips_algorithms_are_disabled(algorithms, fips_disabled, fips_key_sizes);
 }
+
+static const struct {
+    const char *attr;
+    const char **fips_disabled_algos;
+    const struct key_sizes *fips_key_sizes;
+} fips_attributes[] = {
+    {
+        .attr = "fips-host",  // disables a few algos/keysizes but also needs the following ones to be disabled
+        .fips_disabled_algos = fips_disabled,
+        .fips_key_sizes = fips_key_sizes,
+    }, {
+        // keep last
+    }
+};
+
+/* Determine whether any of the attributes disable those algorithms and key
+ * sizes that would be a concern for FIPS mode (unusable for libtpms).
+ * This function returns 'true' if all algorithms that are of a concern for
+ * a host in FIPS mode are disabled, 'false' otherwise. If 'false' is returned
+ * the OpenSSL's FIPS mode must be disable for libtpms to not cause selftest
+ * failures.
+ */
+bool fips_attributes_disable_bad_algos(gchar *const*attributes,
+                                       gchar *const*algorithms)
+{
+    bool ret = false;
+    size_t i;
+
+    for (i = 0; fips_attributes[i].attr != NULL; i++) {
+        if (strv_strncmp(attributes, fips_attributes[i].attr, -1) >= 0) {
+            ret = _fips_algorithms_are_disabled(algorithms,
+                                                fips_attributes[i].fips_disabled_algos,
+                                                fips_attributes[i].fips_key_sizes);
+            if (!ret)
+                break;
+        }
+    }
+    return ret;
+}

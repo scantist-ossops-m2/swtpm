@@ -115,11 +115,21 @@ TPM_RESULT tpmlib_choose_tpm_version(TPMLIB_TPMVersion tpmversion)
  */
 static bool tpmlib_check_need_disable_fips_mode_tpm2(void)
 {
-    char *info_data = TPMLIB_GetInfo(/*TPMLIB_INFO_RUNTIME_ALGORITHMS*/ 8);
+    char *info_data = TPMLIB_GetInfo(/*TPMLIB_INFO_RUNTIME_ALGORITHMS*/ 8 |
+                                     /*TPMLIB_INFO_RUNTIME_ATTRIBUTES*/128);
     g_autofree gchar *enabled = NULL;
     bool need_disable = false;
+    gchar **attributes = NULL;
     gchar **algorithms;
     int ret;
+
+    /* If RuntimeAttributes is not available, check RuntimeAlgorithms */
+    ret = json_get_submap_value(info_data, "RuntimeAttributes", "Enabled",
+                                &enabled);
+    if (!ret) {
+        attributes = g_strsplit(enabled, ",", -1);
+        g_free(enabled);
+    }
 
     ret = json_get_submap_value(info_data, "RuntimeAlgorithms", "Enabled",
                                 &enabled);
@@ -132,9 +142,17 @@ static bool tpmlib_check_need_disable_fips_mode_tpm2(void)
 
     algorithms = g_strsplit(enabled, ",", -1);
 
+    if (attributes) {
+        need_disable = ! fips_attributes_disable_bad_algos(attributes, algorithms);
+        goto out;
+    }
+
     need_disable = ! fips_algorithms_are_disabled(algorithms);
 
     g_strfreev(algorithms);
+
+out:
+    g_strfreev(attributes);
 error:
     free(info_data);
 
