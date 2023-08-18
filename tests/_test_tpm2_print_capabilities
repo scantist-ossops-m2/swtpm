@@ -51,7 +51,8 @@ fi
 exp='\{ "type": "swtpm_setup", '\
 '"features": \[( "tpm-1.2",)? "tpm-2.0", "cmdarg-keyfile-fd", "cmdarg-pwdfile-fd", '\
 '"tpm12-not-need-root", "cmdarg-write-ek-cert-files", "cmdarg-create-config-files", '\
-'"cmdarg-reconfigure-pcr-banks"(, "tpm2-rsa-keysize-2048")?(, "tpm2-rsa-keysize-3072")?'\
+'"cmdarg-reconfigure-pcr-banks", "cmdarg-no-iak", "creates-iak-idevid"'\
+'(, "tpm2-rsa-keysize-2048")?(, "tpm2-rsa-keysize-3072")?'\
 ' \], '\
 '"version": "[^"]*" \}'
 if ! [[ ${msg} =~ ${exp} ]]; then
