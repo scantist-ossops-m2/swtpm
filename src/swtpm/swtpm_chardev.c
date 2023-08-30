@@ -221,6 +221,8 @@ static void usage(FILE *file, const char *prgname, const char *iface)
 #ifdef HAVE_LIBTPMS_SETPROFILE_API
     "--profile name=<name>|profile=<json-profile>\n"
     "                 : Set a profile on the TPM 2\n"
+    "--print-profiles\n"
+    "                 : print full profiles supported by libtpms\n"
 #endif
     "-h|--help        : display this help screen and terminate\n"
     "\n",
@@ -318,6 +320,7 @@ int swtpm_chardev_main(int argc, char **argv, const char *prgname, const char *i
     unsigned int seccomp_action;
     bool printcapabilities = false;
     bool printstates = false;
+    bool printprofiles = false;
     static struct option longopts[] = {
         {"daemon"    ,       no_argument, 0, 'd'},
         {"help"      ,       no_argument, 0, 'h'},
@@ -346,6 +349,7 @@ int swtpm_chardev_main(int argc, char **argv, const char *prgname, const char *i
         {"print-states",     no_argument, 0, 'e'},
 #ifdef HAVE_LIBTPMS_SETPROFILE_API
         {"profile"   , required_argument, 0, 'I'},
+        {"print-profiles",   no_argument, 0, 'N'},
 #endif
         {NULL        , 0                , 0, 0  },
     };
@@ -488,6 +492,10 @@ int swtpm_chardev_main(int argc, char **argv, const char *prgname, const char *i
             profiledata = optarg;
             break;
 
+        case 'N': /* --print-profiles */
+            printprofiles = true;
+            break;
+
         default:
             usage(stderr, prgname, iface);
             exit(EXIT_FAILURE);
@@ -551,6 +559,11 @@ int swtpm_chardev_main(int argc, char **argv, const char *prgname, const char *i
             goto exit_failure;
         else
             goto exit_success;
+    }
+
+    if (printprofiles) {
+        print_profiles();
+        goto exit_success;
     }
 
     if (mlp.fd < 0) {

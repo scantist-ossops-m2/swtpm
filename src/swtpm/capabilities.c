@@ -229,6 +229,18 @@ static int get_profiles(gchar **profiles SWTPM_ATTR_UNUSED)
 
 #endif
 
+int print_profiles(void)
+{
+    char *info_data = TPMLIB_GetInfo(64 /*TPMLIB_INFO_AVAILABLE_PROFILES*/);
+
+    if (info_data)
+        printf("%s", info_data);
+
+    free(info_data);
+
+    return 0;
+}
+
 int capabilities_print_json(bool cusetpm, TPMLIB_TPMVersion tpmversion)
 {
     char *string = NULL;
